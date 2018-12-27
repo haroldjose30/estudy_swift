@@ -9,7 +9,8 @@
 import UIKit
 
 
-class ViewController: UIViewController,UITableViewDataSource {
+class ViewController: UIViewController,UITableViewDataSource, UITableViewDelegate, AddAnItemDelegate {
+    
     
     @IBOutlet var nameField: UITextField?
     
@@ -17,7 +18,7 @@ class ViewController: UIViewController,UITableViewDataSource {
     
     var delegate: AddAMealDelegate?
     
-    
+    var selected = Array<Item>()
     
     var itens = [Item(name: "item 1", calories: 1),
                  Item(name: "item 2", calories: 2),
@@ -29,9 +30,45 @@ class ViewController: UIViewController,UITableViewDataSource {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+       
+        let newItemButton = UIBarButtonItem(title: "New Item", style: UIBarButtonItem.Style.plain, target: self, action: #selector(showNewItem))
+        
+        navigationItem.rightBarButtonItem = newItemButton;
     }
     
+    @IBOutlet var tableView: UITableView?
+    
+    func add(_ item: Item) {
+        itens.append(item)
+        if let table = tableView {
+             table.reloadData()
+        }
+       
+    }
+    
+    @objc func showNewItem() {
+        let newItem = NewItemViewController(delegate: self)
+        if let navigation = navigationController {
+            navigation.pushViewController(newItem, animated: true)
+        }
+    }
+    
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if let cell = tableView.cellForRow(at: indexPath) {
+            if (cell.accessoryType == UITableViewCell.AccessoryType.none){
+                cell.accessoryType = UITableViewCell.AccessoryType.checkmark
+                let item = itens[indexPath.row]
+                selected.append(item)
+            } else {
+                cell.accessoryType = UITableViewCell.AccessoryType.none
+                let item = itens[indexPath.row]
+                if let position = selected.index(of: item) {
+                    selected.remove(at: position)
+                }
+            }
+        }
+    }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return itens.count
@@ -52,10 +89,10 @@ class ViewController: UIViewController,UITableViewDataSource {
         if  let name:String = nameField?.text,
             let happiness:Int = Int(happinesField!.text!){
             
-            let meal = Meal(name: name, happiness: happiness)
+            let meal = Meal(name: name, happiness: happiness,itens:selected)
             
             if let  mealsTableAux = delegate {
-               mealsTableAux.Add(meal: meal);
+               mealsTableAux.Add(meal);
             }
             
             
