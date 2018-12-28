@@ -10,12 +10,26 @@ import UIKit
 
 class MealTableViewController: UITableViewController,AddAMealDelegate {
     
-    var meals = [Meal(name: "refeicao 1", happiness: 5),
-                 Meal(name: "refeicao 2", happiness: 3)]
+    var meals = Array<Meal>()
+    
+    
+    func getArchive() -> String {
+        let userDirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.userDomainMask, true)
+        let dir = userDirs[0]
+        let archive = "\(dir)/eggplant-brownie-meals.dados"
+        return archive
+        
+    }
+    
+    override func viewDidLoad() {
+       self.meals = Dao().load()
+        
+    }
     
     func Add(_ meal:Meal) {
         meals.append(meal)
-        tableView.reloadData()
+        Dao().save(meals)
+        tableView?.reloadData()
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -35,7 +49,29 @@ class MealTableViewController: UITableViewController,AddAMealDelegate {
         let cell = UITableViewCell(style: UITableViewCell.CellStyle.default, reuseIdentifier: nil)
         cell.textLabel!.text = meal.name
         
+        let recognizer = UILongPressGestureRecognizer(target: self, action: #selector(showDetails))
+
+        cell.addGestureRecognizer(recognizer)
+        
         return cell
+    }
+    
+    
+    
+    @objc func showDetails(recognizer: UILongPressGestureRecognizer) {
+        if(recognizer.state == UIGestureRecognizer.State.began) {
+            let cell = recognizer.view as! UITableViewCell
+            
+            if let indexPath = tableView.indexPath(for: cell) {
+                let row = indexPath.row
+                let meal = meals[row]
+                
+                RemoveMealController(controller: self).show(meal: meal, handler: { action in
+                    self.meals.remove(at: row)
+                    self.tableView.reloadData()
+                })
+            }
+        }
     }
     
 }

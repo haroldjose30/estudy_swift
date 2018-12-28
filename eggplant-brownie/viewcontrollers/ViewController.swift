@@ -28,22 +28,30 @@ class ViewController: UIViewController,UITableViewDataSource, UITableViewDelegat
                  Item(name: "item 6", calories: 6),
                  ]
     
+     func getArchive()->String {
+        let userDirs = NSSearchPathForDirectoriesInDomains(FileManager.SearchPathDirectory.documentDirectory, FileManager.SearchPathDomainMask.userDomainMask, true)
+        let dir = userDirs[0]
+        let archive = "\(dir)/eggplant-brownie-items.dados"
+        return archive
+        
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
        
         let newItemButton = UIBarButtonItem(title: "New Item", style: UIBarButtonItem.Style.plain, target: self, action: #selector(showNewItem))
         
         navigationItem.rightBarButtonItem = newItemButton;
+        
+        itens = Dao().load()
     }
     
     @IBOutlet var tableView: UITableView?
     
     func add(_ item: Item) {
         itens.append(item)
-        if let table = tableView {
-             table.reloadData()
-        }
-       
+        Dao().save(itens)
+        tableView?.reloadData()
     }
     
     @objc func showNewItem() {
@@ -82,25 +90,42 @@ class ViewController: UIViewController,UITableViewDataSource, UITableViewDelegat
         return cell
     }
     
+    func convertToInt(_ text: String?) -> Int? {
+        if let number = text {
+            return Int(number)
+        }
+        return nil
+    }
+    
+    func getMealFromForm() -> Meal? {
+        
+        if let name = nameField?.text {
+            if let happiness = convertToInt(happinesField?.text) {
+                return Meal(name: name, happiness: happiness, itens: selected)
+            }
+        }
+        return nil
+        
+    }
     
     @IBAction func add(){
         
 
-        if  let name:String = nameField?.text,
-            let happiness:Int = Int(happinesField!.text!){
-            
-            let meal = Meal(name: name, happiness: happiness,itens:selected)
-            
-            if let  mealsTableAux = delegate {
-               mealsTableAux.Add(meal);
+        if let meal = getMealFromForm() {
+            if let meals = delegate {
+                meals.Add(meal)
+                if let navigation = navigationController {
+                    navigation.popViewController(animated: true)
+                } else {
+                    Alert(controller: self).show(message: "Unable to go back, but the meal was added.")
+                }
+                return
             }
-            
-            
-            if let navigation = navigationController {
-                navigation.popViewController(animated: true);
-            }
-      
         }
+        
+        Alert(controller: self).show()
+
+        
     }
 }
 
