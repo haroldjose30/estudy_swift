@@ -1,2 +1,2 @@
-# estudy_swift
+# study_swift
 exercises from swift course - Alura.com 
